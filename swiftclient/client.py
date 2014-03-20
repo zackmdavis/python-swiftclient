@@ -1093,6 +1093,9 @@ def get_capabilities(http_conn):
                               http_response_content=body)
     return json_loads(body)
 
+ # I think there's actually an inconsistency about "path"; I want to
+ #  return the full URL, but I'm not actually using the domain in the
+ #  tempURL generation---research this
 
 def make_tempurl(url, token, container, name, method, expires, http_conn=None, tempurl_key=None):
     if http_conn:
