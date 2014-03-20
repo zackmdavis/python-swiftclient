@@ -30,6 +30,7 @@ from six.moves.urllib.parse import quote as _quote
 from six.moves.urllib.parse import urlparse, urlunparse
 from time import sleep, time
 import six
+import hmac
 
 from swiftclient import version as swiftclient_version
 from swiftclient.exceptions import ClientException, InvalidHeadersException
@@ -1091,6 +1092,23 @@ def get_capabilities(http_conn):
                               http_status=resp.status, http_reason=resp.reason,
                               http_response_content=body)
     return json_loads(body)
+
+
+def make_tempurl(url, token, container, name, method, expires, http_conn=None, tempurl_key=None):
+    if http_conn:
+        parsed, conn = http_conn
+    else:
+        parsed, conn = http_connection(url)
+    headers['X-Auth-Token'] = token
+    if not tempurl_key:
+        tempurl_key = head_account(url, token, conn).get("X-Account-Meta-Temp-Url-Key")
+        if not tempurl_key:
+            raise ClientException("No TempURL Key present")
+    path = "/v1/" + url.split('/v1/')[1] + '/'.join(container, name)
+    sig = hmac.new(key, '%s\n%s\n%s' % (method, expires, path),
+                   sha1).hexdigest()
+    return '%s?temp_url_sig=%s&temp_url_expires=%s' % (path, sig, expires)
+
 
 
 class Connection(object):
