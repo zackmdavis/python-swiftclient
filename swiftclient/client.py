@@ -1367,3 +1367,8 @@ class Connection(object):
         url = scheme + '://' + netloc + '/info'
         http_conn = http_connection(url, ssl_compression=self.ssl_compression)
         return get_capabilities(http_conn)
+
+    def make_tempurl(self, container, obj, method, expires, tempurl_key=None):
+        """Wrapper for :func:`delete_object`"""
+        return self._retry(None, make_tempurl, container, obj, method, expires,
+                           tempurl_key)
