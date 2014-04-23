@@ -17,3 +17,9 @@ swiftclient/versioninfo
 cover/
 coverage.xml
 doc/source/api/
+
+bin/
+include/
+lib/
+local/
+share/
