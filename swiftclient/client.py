@@ -1101,7 +1101,8 @@ def make_tempurl(url, token, container, name, method, expires, http_conn=None, t
     else:
         parsed, conn = http_connection(url)
     if tempurl_key is None:
-        tempurl_key = head_account(url, token, (parsed, conn)).get("x-account-meta-temp-url-key")
+        account_headers = head_account(url, token, (parsed, conn)) 
+        tempurl_key = account_headers.get("x-account-meta-temp-url-key")
         if tempurl_key is None:
             raise ClientException("No TempURL Key set")
     path = "/v1/" + '/'.join([url.split('/v1/')[1], container, name])
@@ -1369,6 +1370,6 @@ class Connection(object):
         return get_capabilities(http_conn)
 
     def make_tempurl(self, container, obj, method, expires, tempurl_key=None):
-        """Wrapper for :func:`delete_object`"""
+        """Wrapper for :func:`make_tempurl`"""
         return self._retry(None, make_tempurl, container, obj, method, expires,
-                           tempurl_key)
+                           tempurl_key=tempurl_key)
