@@ -1101,10 +1101,10 @@ def make_tempurl(url, token, container, name, method, expires, http_conn=None, t
     else:
         parsed, conn = http_connection(url)
     if tempurl_key is None:
-        tempurl_key = head_account(url, token, conn).get("X-Account-Meta-Temp-Url-Key")
+        tempurl_key = head_account(url, token, (parsed, conn)).get("x-account-meta-temp-url-key")
         if tempurl_key is None:
             raise ClientException("No TempURL Key set")
-    path = "/v1/" + url.split('/v1/')[1] + '/'.join([container, name])
+    path = "/v1/" + '/'.join([url.split('/v1/')[1], container, name])
     sig = hmac.new(tempurl_key, '%s\n%s\n%s' % (method, expires, path),
                    hashlib.sha1).hexdigest()
     return '%s/%s/%s?temp_url_sig=%s&temp_url_expires=%s' % (
