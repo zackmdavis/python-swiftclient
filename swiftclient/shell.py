@@ -791,7 +791,12 @@ def st_upload(parser, args, output_manager):
     parser.add_option(
         '', '--ignore-checksum', dest='checksum', default=True,
         action='store_false', help='Turn off checksum validation for uploads.')
-    (options, args) = parse_args(parser, args)
+    parser.add_option(
+        '', ''
+
+    )
+
+    options, args = parse_args(parser, args)
     args = args[1:]
     if len(args) < 2:
         output_manager.error(
@@ -800,14 +805,16 @@ def st_upload(parser, args, output_manager):
         return
     else:
         container = args[0]
-        files = args[1:]
+        uploads = args[1:]
+
+    exclusions = []  # TODO: get these from `options`
 
     if options.object_name is not None:
-        if len(files) > 1:
+        if len(uploads) > 1:
             output_manager.error('object-name only be used with 1 file or dir')
             return
         else:
-            orig_path = files[0]
+            orig_path, = uploads
 
     if options.segment_size:
         try:
@@ -832,17 +839,23 @@ def st_upload(parser, args, output_manager):
         try:
             objs = []
             dir_markers = []
-            for f in files:
-                if isfile(f):
-                    objs.append(f)
-                elif isdir(f):
-                    for (_dir, _ds, _fs) in walk(f):
-                        if not (_ds + _fs):
-                            dir_markers.append(_dir)
+            for u in uploads:
+                if isfile(u) and u not in exclusions:
+                    objs.append(u)
+                elif isdir(u):
+                    for dirpath, subdirs, filenames in walk(u):
+                        # TODO: use commonpath (inlined in utils from 3.5
+                        # stdlib) to manage exclusions, but allow mixing
+                        # absolute/relative paths somehow
+                        if not subdirs and not filenames:
+                            dir_markers.append(dirpath)
                         else:
-                            objs.extend([join(_dir, _f) for _f in _fs])
+                            objs.extend(
+                                filter(lambda p: p not in exclusions,
+                                       [join(dirpath, f) for f in filenames]))
                 else:
-                    output_manager.error("Local file '%s' not found" % f)
+                    output_manager.error(
+                        "Local file or directory '%s' not found" % u)
 
             # Now that we've collected all the required files and dir markers
             # build the tuples for the call to upload
